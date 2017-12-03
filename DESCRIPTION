@@ -1,0 +1,12 @@
+Package: xiangma
+License: GPL-3
+Title: An toolkit for xiangma reading
+Type: Package
+LazyLoad: yes
+Author: Jian Li, Dawei Lang
+Maintainer: Dawei Lang <chiffonlang@icloud.com>
+Description: This package provides soem useful functions for xiangma reading.
+Version: 0.0-1
+Date: 2017-11-26
+Depends: R (>= 3.0.0), Rweixin, jsonlite, RPostgreSQL, dplyr, tmcn, grid, gridExtra
+
