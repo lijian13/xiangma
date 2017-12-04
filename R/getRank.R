@@ -3,18 +3,24 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 	tryCatch({
 				CONN <- .createConn()
 				
-				tbl.user <- dbGetQuery(CONN, "SELECT * from groupmember where status = 1")
+				tbl.user <- dbGetQuery(CONN, "SELECT * from member_log")
 				tbl.bookhis <- dbGetQuery(CONN, "SELECT openid, count(openid) as total, sum(char_length(content)) as totalnchar from comment_log group by openid")	
 				tbl.bookcur <- dbGetQuery(CONN, paste0("SELECT openid, count(openid) as curr from comment_log where time >= '", paste0(month, "-01 00:00:00"), "' group by openid"))
 				Encoding(tbl.user$publicname) <- "UTF-8"
-				Encoding(tbl.user$groupname) <- "UTF-8"
 				
 				if (nrow(tbl.bookcur) == 0) {
 					tbl.bookcur <- data.frame(openid = character(), curr = numeric())
 				}
-				outdf <- merge(merge(tbl.user[, c("openid", "publicname", "jointime")], tbl.bookhis, all.x = TRUE), tbl.bookcur, all.x = TRUE)
+				outdf <- merge(merge(tbl.user[tbl.user$status == 1, c("openid", "publicname", "jointime")], tbl.bookhis, all.x = TRUE), tbl.bookcur, all.x = TRUE)
 				outdf$meanchar <- round(outdf$totalnchar / outdf$total, 0)
-				outdf$days <- ceiling(as.numeric(difftime(Sys.time(), strptime(outdf$jointime, format = "%Y-%m-%d %H:%M:%S"), unit = "days")))
+				
+				tbl.user$leavetime[is.na(tbl.user$leavetime)] <- as.character(Sys.time())
+				tbl.user$diffdays <- ceiling(as.numeric(difftime(strptime(tbl.user$leavetime, format = "%Y-%m-%d %H:%M:%S"), strptime(tbl.user$jointime, format = "%Y-%m-%d %H:%M:%S"), unit = "days")))
+				tmp.daysdf <- summarise(group_by(tbl.user, openid), days = sum(diffdays, na.rm = TRUE))
+				outdf <- merge(outdf, tmp.daysdf, all.x = TRUE)	
+				#outdf$days <- ceiling(as.numeric(difftime(Sys.time(), strptime(outdf$jointime, format = "%Y-%m-%d %H:%M:%S"), unit = "days")))
+				
+				
 				outdf$thismon <- 0
 				outdf$thismon[substr(outdf$jointime, 1, 7) == substr(Sys.time(), 1, 7)] <- 1
 				
