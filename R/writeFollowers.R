@@ -16,6 +16,7 @@ writeFollowers <- function(wxobj) {
 				}
 				if (length(user.add) > 0) {
 					tbl.new <- getUsers(wxobj, user.add)
+					tbl.new <- tbl.new[order(tbl.new$subscribe_time), ] 
 					#tbl.new$nickname <- gsub("[^[[:ascii:]\u4e00-\u9fa5]", "", tbl.new$nickname, perl = TRUE)
 					dbWriteTable(CONN, "followers", tbl.new, row.names = FALSE, append = TRUE)
 				}

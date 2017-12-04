@@ -14,6 +14,9 @@
 
 .createConn <- function() {
 	connpath <- file.path(Sys.getenv("APPDATA"), "xiangma", "db")
+	if (!file.exists(file.path(connpath, "config.json"))) {
+		stop("Please use '.createDBConfig' to set the config file!")
+	}
 	conlist <- fromJSON(file.path(connpath, "config.json"))
 	CONN <- dbConnect(dbDriver("PostgreSQL"), user = conlist$user, password = conlist$password, dbname = conlist$dbname, host = conlist$host, port = conlist$port)
 	return(CONN)
