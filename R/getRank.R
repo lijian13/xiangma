@@ -29,6 +29,8 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 				OUT$total[is.na(OUT$total)] <- 0
 				OUT$meanchar[is.na(OUT$meanchar)] <- 0
 				OUT <- arrange(OUT, desc(curr), desc(total), desc(days), desc(meanchar))
+				OUT$rank <- 1:nrow(OUT)
+				OUT <- OUT[, c(7, 1:6)]
 				
 				df1 <- OUT[OUT$curr > 0, ]
 				df2 <- OUT[OUT$curr == 0 & OUT$thismon == 1, ]
@@ -40,14 +42,14 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 				OUTDF <- rbind(df1, df2, df3)
 				OUTDF$thismon <- NULL
 				rownames(OUTDF) <- NULL
-				colnames(OUTDF) <- c("\u6635\u79F0", "\u5F53\u6708\u6570", "\u603B\u6570", "\u7FA4\u9F84(\u5929)", "\u4E66\u8BC4\u5747\u5B57", "safe")
+				colnames(OUTDF) <- c("\u6392\u540D", "\u6635\u79F0", "\u5F53\u6708\u6570", "\u603B\u6570", "\u7FA4\u9F84(\u5929)", "\u4E66\u8BC4\u5747\u5B57", "safe")
 				
 				tmp.color <- rep("black", nrow(OUTDF))
 				tmp.color[OUTDF$safe == 0] <- "red"
 				OUTDF$safe <- NULL
 				
 				if (!is.null(picfile)) {					
-					jpeg(filename = picfile, width = 240 + max(nchar(OUTDF[,1], type = "width")) * 10, height = (nrow(OUTDF) + 1)*23, 
+					jpeg(filename = picfile, width = 400 + max(nchar(OUTDF[,1], type = "width")) * 10, height = (nrow(OUTDF) + 1)*23, 
 							units = "px", pointsize = 14, quality = 75, bg = "white", family = "")
 					g <- tableGrob(OUTDF, rows = NULL, theme = ttheme_default(base_size = 14, base_colour = tmp.color))
 					grid.newpage()

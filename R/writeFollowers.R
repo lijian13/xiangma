@@ -32,7 +32,7 @@ writeFollowers <- function(wxobj, updatestatus = FALSE) {
 					member.add <- setdiff(tbl.web$openid, tbl.status$openid[tbl.status$status == 1])
 					member.rm <- setdiff(tbl.status$openid[tbl.status$status == 1], tbl.web$openid)
 					if (length(member.add) > 0) {
-						tmp.add <- tbl.web[tbl.web$openid == member.add, ]
+						tmp.add <- tbl.web[tbl.web$openid %in% member.add, ]
 						out.add <- data.frame(openid = tmp.add$openid, publicname = tmp.add$remark, 
 								jointime = tmp.add$subscribe_time, leavetime = NA, status = 1)
 						dbWriteTable(CONN, "member_log", out.add, row.names = FALSE, append = TRUE)
@@ -43,9 +43,9 @@ writeFollowers <- function(wxobj, updatestatus = FALSE) {
 							strsql <- paste0("update member_log set leavetime = '", as.character(Sys.time()), 
 									"', status = 0 where openid = '", member.rm[i], "' and status = 1")
 							rs <- dbSendQuery(CONN, strsql)	
-							dbClearResult(rs)
-							cat(paste0(length(member.rm), " group members have been removed!\n"))
+							dbClearResult(rs)							
 						}
+						cat(paste0(length(member.rm), " group members have been removed!\n"))
 					}
 				}
 				invisible(TRUE)
