@@ -4,7 +4,7 @@ writeFollowers <- function(wxobj, updatestatus = FALSE) {
 	tryCatch({
 				CONN <- .createConn()
 				tbl.old <- dbReadTable(CONN, "followers")
-				Encoding(tbl.old$nickname) <- "UTF-8"
+				if (nrow(tbl.old) > 0) Encoding(tbl.old$nickname) <- "UTF-8"
 				
 				user.old <- tbl.old$openid[tbl.old$subscribe == 1]
 				user.new <- getUserList(wxobj)
