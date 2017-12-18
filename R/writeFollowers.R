@@ -27,10 +27,13 @@ writeFollowers <- function(wxobj, updatestatus = FALSE) {
 				
 				if (identical(updatestatus, TRUE)) {
 					tbl.status <- dbReadTable(CONN, "member_log")
+					Encoding(tbl.status$publicname) <- "UTF-8"
 					tbl.web0 <- getUsers(wxobj, user.new)
 					tbl.web <- tbl.web0[grepl("101", tbl.web0$tagid), ]
 					member.add <- setdiff(tbl.web$openid, tbl.status$openid[tbl.status$status == 1])
-					member.rm <- setdiff(tbl.status$openid[tbl.status$status == 1], tbl.web$openid)
+					member.rm <- setdiff(tbl.status$openid[tbl.status$status == 1], tbl.web$openid)				
+					tmp.namechange <- merge(unique(tbl.status[, c("openid", "publicname")]), tbl.web0[, c("openid", "remark")], all.x = TRUE)
+					member.change.df <- tmp.namechange[tmp.namechange$publicname != tmp.namechange$remark, ]
 					if (length(member.add) > 0) {
 						tmp.add <- tbl.web[tbl.web$openid %in% member.add, ]
 						out.add <- data.frame(openid = tmp.add$openid, publicname = tmp.add$remark, 
@@ -46,6 +49,15 @@ writeFollowers <- function(wxobj, updatestatus = FALSE) {
 							dbClearResult(rs)							
 						}
 						cat(paste0(length(member.rm), " group members have been removed!\n"))
+					}
+					if (nrow(member.change.df) > 0) {
+						for (i in 1:nrow(member.change.df)) {
+							strsql <- paste0("update member_log set publicname = '", member.change.df[i, "remark"], 
+									"' where openid = '", member.change.df[i, "openid"], "'")
+							rs <- dbSendQuery(CONN, strsql)	
+							dbClearResult(rs)							
+						}
+						cat(paste0(nrow(member.change.df), " member names have been changed!\n"))
 					}
 				}
 				invisible(TRUE)
