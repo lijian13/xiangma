@@ -1,9 +1,15 @@
 
-analyzeBook <- function(picfile = NULL) {
+analyzeBook <- function(year = NULL, picfile = NULL) {
 	tryCatch({
 				CONN <- .createConn()
 				
-				commentdf <- dbGetQuery(CONN, "select msgid, doubanid as id, openid, week, time from comment_log where doubanid is null or doubanid not like 'LW%'")
+				if (is.null(year)) {
+					commentdf <- dbGetQuery(CONN, "select msgid, doubanid as id, openid, week, time from comment_log where doubanid is null or doubanid not like 'LW%'")
+				} else {
+					commentdf <- dbGetQuery(CONN, paste0("select msgid, doubanid as id, openid, week, time from comment_log where time like '", year, 
+									"%' and (doubanid is null or doubanid not like 'LW%')"))
+				}
+				
 				booklistdf <- dbGetQuery(CONN, "select distinct id, author, tags from douban_list")
 				Encoding(booklistdf$tags) <- "UTF-8"
 				Encoding(booklistdf$author) <- "UTF-8"
@@ -41,7 +47,11 @@ analyzeBook <- function(picfile = NULL) {
 							units = "px", pointsize = 18, quality = 100, bg = "white", family = "")
 					par(mfrow = c(4, 1))
 					plot(num~week, data = weekdf, type = "l", xlab = "\u5468\u6570", ylab = "\u8BFB\u4E66\u91CF")
-					plot(ts(monthdf$num, frequency = 12, start = c(2015, 11)), xlab = "\u6708\u4EFD", ylab = "\u8BFB\u4E66\u91CF")
+					if (is.null(year)) {
+						plot(ts(monthdf$num, frequency = 12, start = c(2015, 11)), xlab = "\u6708\u4EFD", ylab = "\u8BFB\u4E66\u91CF")
+					} else {
+						plot(ts(monthdf$num, frequency = 12, start = c(as.numeric(year), 1)), xlab = "\u6708\u4EFD", ylab = "\u8BFB\u4E66\u91CF")
+					}
 					barplot(tagvec, las = 2, ylab = "\u6807\u7B7E\u70ED\u5EA6")
 					barplot(authorvec, las = 2, ylab = "\u4F5C\u8005\u70ED\u5EA6")	
 					dev.off()

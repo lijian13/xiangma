@@ -22,7 +22,7 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 				
 				
 				outdf$thismon <- 0
-				outdf$thismon[substr(outdf$jointime, 1, 7) == substr(Sys.time(), 1, 7)] <- 1
+				outdf$thismon[substr(outdf$jointime, 1, 7) == month] <- 1
 				
 				OUT <- select(outdf, publicname, curr, total, days, meanchar, thismon)
 				OUT$curr[is.na(OUT$curr)] <- 0

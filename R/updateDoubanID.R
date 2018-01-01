@@ -30,8 +30,11 @@ updateDoubanID <- function(month = substr(Sys.time(), 1, 7)) {
 fixDoubanID <- function(msgid, doubanid) {
 	tryCatch({
 				CONN <- .createConn()
-				tmp.douban <- suppressWarnings(searchDoubanBook(doubanid, detail = TRUE))
-				dbWriteTable(CONN, "douban_list", tmp.douban, row.names = FALSE, append = TRUE)
+				tmp.exists <- dbGetQuery(CONN, paste0("select * from douban_list where id = '", doubanid, "'"))
+				if (nrow(tmp.exists) == 0) {
+					tmp.douban <- suppressWarnings(searchDoubanBook(doubanid, detail = TRUE))
+					dbWriteTable(CONN, "douban_list", tmp.douban, row.names = FALSE, append = TRUE)
+				} 	
 				strsql <- paste0("update comment_log set doubanid = '", tmp.douban$id[1], "', doubantitle = '", gsub("'", "''", tmp.douban$title[1]), "' where msgid = '", msgid, "'")
 				rs <- dbSendQuery(CONN, strsql)	
 				dbClearResult(rs)
@@ -48,6 +51,10 @@ fixDoubanID <- function(msgid, doubanid) {
 addDoubanID <- function(msgid, doubanid, title, subtitle = "", author = "", translator = "", pubdate = "", publisher = "") {
 	tryCatch({
 				CONN <- .createConn()
+				tmp.exists <- dbGetQuery(CONN, paste0("select * from douban_list where id = '", doubanid, "'"))
+				if (nrow(tmp.exists) == 0) {
+					stop("this id has been existed!")
+				} 
 				tmp.douban <- data.frame(id = doubanid, title = toUTF8(title), 
 						subtitle = toUTF8(subtitle), author = toUTF8(author), 
 						translator = toUTF8(translator), pubdate = toUTF8(pubdate), 

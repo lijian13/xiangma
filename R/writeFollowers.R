@@ -33,6 +33,7 @@ writeFollowers <- function(wxobj, updatestatus = FALSE) {
 					member.add <- setdiff(tbl.web$openid, tbl.status$openid[tbl.status$status == 1])
 					member.rm <- setdiff(tbl.status$openid[tbl.status$status == 1], tbl.web$openid)				
 					tmp.namechange <- merge(unique(tbl.status[, c("openid", "publicname")]), tbl.web0[, c("openid", "remark")], all.x = TRUE)
+					tmp.namechange <- tmp.namechange[!is.na(tmp.namechange$remark),]
 					member.change.df <- tmp.namechange[tmp.namechange$publicname != tmp.namechange$remark, ]
 					if (length(member.add) > 0) {
 						tmp.add <- tbl.web[tbl.web$openid %in% member.add, ]
