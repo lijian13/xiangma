@@ -4,7 +4,7 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 				CONN <- .createConn()
 				
 				tbl.user <- dbGetQuery(CONN, "SELECT * from member_log")
-				tbl.bookhis <- dbGetQuery(CONN, "SELECT openid, count(openid) as total, sum(char_length(content)) as totalnchar from comment_log group by openid")	
+				tbl.bookhis <- dbGetQuery(CONN, "SELECT openid, count(openid) as total, sum(char_length(content)) as totalnchar from comment_log where doubanid is null or doubanid not like 'LW%' group by openid")	
 				tbl.bookcur <- dbGetQuery(CONN, paste0("SELECT openid, count(openid) as curr from comment_log where time like '", paste0(month, "%"), "' and (doubanid is null or doubanid not like 'LW%') group by openid"))
 				Encoding(tbl.user$publicname) <- "UTF-8"
 				
@@ -15,7 +15,7 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 				outdf$meanchar <- round(outdf$totalnchar / outdf$total, 0)
 				
 				tbl.user$leavetime[is.na(tbl.user$leavetime)] <- as.character(Sys.time())
-				tbl.user$diffdays <- ceiling(as.numeric(difftime(strptime(tbl.user$leavetime, format = "%Y-%m-%d %H:%M:%S"), strptime(tbl.user$jointime, format = "%Y-%m-%d %H:%M:%S"), unit = "days")))
+				tbl.user$diffdays <- as.numeric(difftime(strptime(tbl.user$leavetime, format = "%Y-%m-%d %H:%M:%S"), strptime(tbl.user$jointime, format = "%Y-%m-%d %H:%M:%S"), unit = "days"))
 				tmp.daysdf <- summarise(group_by(tbl.user, openid), days = sum(diffdays, na.rm = TRUE))
 				outdf <- merge(outdf, tmp.daysdf, all.x = TRUE)	
 				#outdf$days <- ceiling(as.numeric(difftime(Sys.time(), strptime(outdf$jointime, format = "%Y-%m-%d %H:%M:%S"), unit = "days")))
@@ -45,6 +45,7 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 				
 				OUTDF$thismon <- NULL
 				rownames(OUTDF) <- NULL
+				OUTDF$days <- ceiling(OUTDF$days)
 				colnames(OUTDF) <- c("\u6392\u540D", "\u6635\u79F0", "\u5F53\u6708\u6570", "\u603B\u6570", "\u7FA4\u9F84(\u5929)", "\u4E66\u8BC4\u5747\u5B57", "safe")
 				
 				tmp.color <- rep("black", nrow(OUTDF))

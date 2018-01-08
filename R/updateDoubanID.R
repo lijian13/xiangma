@@ -52,7 +52,7 @@ addDoubanID <- function(msgid, doubanid, title, subtitle = "", author = "", tran
 	tryCatch({
 				CONN <- .createConn()
 				tmp.exists <- dbGetQuery(CONN, paste0("select * from douban_list where id = '", doubanid, "'"))
-				if (nrow(tmp.exists) == 0) {
+				if (nrow(tmp.exists) > 0) {
 					stop("this id has been existed!")
 				} 
 				tmp.douban <- data.frame(id = doubanid, title = toUTF8(title), 

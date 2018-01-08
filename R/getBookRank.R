@@ -31,14 +31,16 @@ getBookRank <- function(year = NULL, n = 20, picfile = NULL) {
 					if (!is.null(picfile)) {					
 						jpeg(filename = picfile, 
 								width = 210 + max(nchar(OUTDF[,1], type = "width")) * 8 + max(nchar(OUTDF[,4], type = "width")) * 8, 
-								height = 50 + (nrow(OUTDF) + 1)*23, 
+								height = 60 + (nrow(OUTDF) + 1)*23, 
 								units = "px", pointsize = 14, quality = 75, bg = "white", family = "")
 						
 						g1 <- tableGrob(OUTDF, rows = NULL, theme = ttheme_default(base_size = 14))
-						title1 <- textGrob(paste0("\u622A\u81F3\u76EE\u524D\u54CD\u9A6C\u70ED\u95E8\u4E66\u7C4D\u6392\u884C\u699C\n\uff08\u66F4\u65B0\u4E8E ",
-										as.character(Sys.time()), "\uFF0C\u76EE\u524D\u8BFB\u4E66\u603B\u6570\u4E3A ", nrow(bookdf1), " \u672C\uff09"), gp = gpar(fontsize=16))
+						title1 <- textGrob(paste0("\u622A\u81F3\u76EE\u524D\u54CD\u9A6C\u70ED\u95E8\u4E66\u7C4D\u6392\u884C\u699C\n\uff08\u8BFB\u4E66\u603B\u6570\u4E3A ", 
+										sum(bookdf1$num), " \u672C\uFF0C\u5176\u4E2D\u4E0D\u91CD\u590D\u4E66\u76EE ", nrow(bookdf1), " \u672C\uff09"), gp = gpar(fontsize=16))
+						tail1 <- textGrob(paste0("\u66F4\u65B0\u4E8E ", as.character(Sys.time())), gp = gpar(fontsize=12))						
 						t1 <- gtable_add_rows(g1, heights = grobHeight(title1) + unit(5,"mm"), pos = 0)
-						t1 <- gtable_add_grob(t1, title1, 1, 1, 1, ncol(t1))
+						t1 <- gtable_add_rows(t1, heights = grobHeight(tail1)+ unit(5,"mm"))
+						t1 <- gtable_add_grob(t1, list(title1, tail1), t=c(1, nrow(t1)), l=c(1,2), r=ncol(t1))	
 						grid.newpage()
 						grid.draw(t1)	
 						dev.off()
@@ -72,14 +74,16 @@ getBookRank <- function(year = NULL, n = 20, picfile = NULL) {
 					if (!is.null(picfile)) {					
 						jpeg(filename = picfile, 
 								width = 200 + max(nchar(OUTDF[,1], type = "width")) * 8 + max(nchar(OUTDF[,4], type = "width")) * 8, 
-								height = 50 + (nrow(OUTDF) + 1)*23, 
+								height = 60 + (nrow(OUTDF) + 1)*23, 
 								units = "px", pointsize = 14, quality = 75, bg = "white", family = "")
 						
 						g1 <- tableGrob(OUTDF, rows = NULL, theme = ttheme_default(base_size = 14))
 						title1 <- textGrob(paste0(year, "\u5E74\u54CD\u9A6C\u8BFB\u4E66\u7FA4\u70ED\u95E8\u4E66\u7C4D\u6392\u884C\u699C\n\uff08\u5F53\u5E74\u8BFB\u4E66\u603B\u6570\u4E3A ", 
 										sum(bookdf1$num), " \u672C\uFF0C\u5176\u4E2D\u4E0D\u91CD\u590D\u4E66\u76EE ", nrow(bookdf1), " \u672C\uff09"), gp = gpar(fontsize=16))
+						tail1 <- textGrob(paste0("\u66F4\u65B0\u4E8E ", as.character(Sys.time())), gp = gpar(fontsize=12))						
 						t1 <- gtable_add_rows(g1, heights = grobHeight(title1) + unit(5,"mm"), pos = 0)
-						t1 <- gtable_add_grob(t1, title1, 1, 1, 1, ncol(t1))
+						t1 <- gtable_add_rows(t1, heights = grobHeight(tail1)+ unit(5,"mm"))
+						t1 <- gtable_add_grob(t1, list(title1, tail1), t=c(1, nrow(t1)), l=c(1,2), r=ncol(t1))
 						grid.newpage()
 						grid.draw(t1)	
 						dev.off()
