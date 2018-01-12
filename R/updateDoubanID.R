@@ -34,7 +34,9 @@ fixDoubanID <- function(msgid, doubanid) {
 				if (nrow(tmp.exists) == 0) {
 					tmp.douban <- suppressWarnings(searchDoubanBook(doubanid, detail = TRUE))
 					dbWriteTable(CONN, "douban_list", tmp.douban, row.names = FALSE, append = TRUE)
-				} 	
+				}  else {
+					tmp.douban <- dbGetQuery(CONN, paste0("SELECT * from douban_list where id = '", doubanid, "'"))
+				}	
 				strsql <- paste0("update comment_log set doubanid = '", tmp.douban$id[1], "', doubantitle = '", gsub("'", "''", tmp.douban$title[1]), "' where msgid = '", msgid, "'")
 				rs <- dbSendQuery(CONN, strsql)	
 				dbClearResult(rs)
