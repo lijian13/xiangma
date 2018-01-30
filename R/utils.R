@@ -22,3 +22,13 @@
 	return(CONN)
 }
 
+.similarity <- function(s1, s2) {
+	wdf1 <- createWordFreq(segmentCN(s1))
+	wdf2 <- createWordFreq(segmentCN(s2))
+	names(wdf2)[2] <- "freq2"
+	wdf <- merge(wdf1, wdf2, all.x = TRUE, all.y = TRUE)
+	wdf$freq[is.na(wdf$freq)] <- 0
+	wdf$freq2[is.na(wdf$freq2)] <- 0
+	OUT <- crossprod(wdf$freq, wdf$freq2)[1,1] / (sum(wdf$freq^2)^0.5 * sum(wdf$freq2^2)^0.5)
+	return(OUT)
+}

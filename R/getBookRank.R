@@ -3,10 +3,10 @@ getBookRank <- function(year = NULL, n = 20, picfile = NULL) {
 	tryCatch({
 				CONN <- .createConn()
 				if (is.null(year)) {
-					bookdf1 <- dbGetQuery(CONN, "select doubanid as id, doubantitle as title, count(doubanid) as num from comment_log where doubanid not like 'LW%' group by doubanid, doubantitle")
+					bookdf1 <- dbGetQuery(CONN, "select doubanid as id, doubantitle as title, count(doubanid) as num from comment_log where include = 1 group by doubanid, doubantitle")
 					Encoding(bookdf1$title) <- "UTF-8"
 					bookdf2 <- dbGetQuery(CONN, paste0("select doubanid as id, doubantitle as title, count(doubanid) as num1 from comment_log where time > '", 
-									substr(Sys.time() - 365 * 24 * 3600, 1, 10), "' and doubanid not like 'LW%' group by doubanid, doubantitle"))
+									substr(Sys.time() - 365 * 24 * 3600, 1, 10), "' and include = 1 group by doubanid, doubantitle"))
 					Encoding(bookdf2$title) <- "UTF-8"
 					booklistdf <- dbGetQuery(CONN, "select distinct id, author from douban_list")
 					Encoding(booklistdf$author) <- "UTF-8"
@@ -47,9 +47,9 @@ getBookRank <- function(year = NULL, n = 20, picfile = NULL) {
 					}
 				} else {
 					bookdf1 <- dbGetQuery(CONN, paste0("select doubanid as id, doubantitle as title, count(doubanid) as num from comment_log where time like '",
-									year, "%' and doubanid not like 'LW%' group by doubanid, doubantitle"))
+									year, "%' and include = 1 group by doubanid, doubantitle"))
 					Encoding(bookdf1$title) <- "UTF-8"
-					bookdf2 <- dbGetQuery(CONN, paste0("select doubanid as id, doubantitle as title, count(doubanid) as num1 from comment_log where doubanid not like 'LW%' group by doubanid, doubantitle"))
+					bookdf2 <- dbGetQuery(CONN, paste0("select doubanid as id, doubantitle as title, count(doubanid) as num1 from comment_log where include = 1 group by doubanid, doubantitle"))
 					Encoding(bookdf2$title) <- "UTF-8"
 					booklistdf <- dbGetQuery(CONN, "select distinct id, author from douban_list")
 					Encoding(booklistdf$author) <- "UTF-8"

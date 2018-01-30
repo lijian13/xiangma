@@ -9,7 +9,7 @@ updateDoubanID <- function(month = substr(Sys.time(), 1, 7)) {
 					tmp.douban <- suppressWarnings(searchDouban(commdf$title[i], detail = TRUE))
 					#tmp.douban[which.max(tmp.douban$ratingnum), ]
 					if (nrow(tmp.douban) > 0) {
-						strsql <- paste0("update comment_log set doubanid = '", tmp.douban$id[1], "', doubantitle = '", tmp.douban$title[1], "' where msgid = '", commdf$msgid[i], "'")
+						strsql <- paste0("update comment_log set doubanid = '", tmp.douban$id[1], "', doubantitle = '", tmp.douban$title[1], "', include = 1 where msgid = '", commdf$msgid[i], "'")
 						rs <- dbSendQuery(CONN, strsql)	
 						dbClearResult(rs)
 						if (!tmp.douban$id[1] %in% bookdist) {
@@ -37,7 +37,12 @@ fixDoubanID <- function(msgid, doubanid) {
 				}  else {
 					tmp.douban <- dbGetQuery(CONN, paste0("SELECT * from douban_list where id = '", doubanid, "'"))
 				}	
-				strsql <- paste0("update comment_log set doubanid = '", tmp.douban$id[1], "', doubantitle = '", gsub("'", "''", tmp.douban$title[1]), "' where msgid = '", msgid, "'")
+				if (grepl("^LW", doubanid)) {
+					strinclude = ", include = 0"
+				} else {
+					strinclude = ", include = 1"
+				}
+				strsql <- paste0("update comment_log set doubanid = '", tmp.douban$id[1], "', doubantitle = '", gsub("'", "''", tmp.douban$title[1]), "'", strinclude, " where msgid = '", msgid, "'")
 				rs <- dbSendQuery(CONN, strsql)	
 				dbClearResult(rs)
 			}, error = function(e) {
@@ -62,7 +67,12 @@ addDoubanID <- function(msgid, doubanid, title, subtitle = "", author = "", tran
 						translator = toUTF8(translator), pubdate = toUTF8(pubdate), 
 						publisher = toUTF8(publisher), stringsAsFactors = FALSE)
 				dbWriteTable(CONN, "douban_list", tmp.douban, row.names = FALSE, append = TRUE)
-				strsql <- paste0("update comment_log set doubanid = '", tmp.douban$id[1], "', doubantitle = '", tmp.douban$title[1], "' where msgid = '", msgid, "'")
+				if (grepl("^LW", doubanid)) {
+					strinclude = ", include = 0"
+				} else {
+					strinclude = ", include = 1"
+				}
+				strsql <- paste0("update comment_log set doubanid = '", tmp.douban$id[1], "', doubantitle = '", tmp.douban$title[1], "'", strinclude, " where msgid = '", msgid, "'")
 				rs <- dbSendQuery(CONN, strsql)	
 				dbClearResult(rs)
 			}, error = function(e) {

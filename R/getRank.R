@@ -4,14 +4,16 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 				CONN <- .createConn()
 				
 				tbl.user <- dbGetQuery(CONN, "SELECT * from member_log")
-				tbl.bookhis <- dbGetQuery(CONN, "SELECT openid, count(openid) as total, sum(char_length(content)) as totalnchar from comment_log where doubanid is null or doubanid not like 'LW%' group by openid")	
-				tbl.bookcur <- dbGetQuery(CONN, paste0("SELECT openid, count(openid) as curr from comment_log where time like '", paste0(month, "%"), "' and (doubanid is null or doubanid not like 'LW%') group by openid"))
+				tbl.bookhis <- dbGetQuery(CONN, "SELECT openid, count(openid) as total, sum(char_length(content)) as totalnchar from comment_log where include is null or include = 1 group by openid")	
+				tbl.bookcur <- dbGetQuery(CONN, paste0("SELECT openid, count(openid) as curr from comment_log where time like '", paste0(month, "%"), "' and (include is null or include = 1) group by openid"))
+				tbl.bookcur1 <- dbGetQuery(CONN, paste0("SELECT openid, count(openid) as curr1 from comment_log where time like '", paste0(month, "%"), "' and (include is null or include >= 1) group by openid"))
 				Encoding(tbl.user$publicname) <- "UTF-8"
 				
 				if (nrow(tbl.bookcur) == 0) {
 					tbl.bookcur <- data.frame(openid = character(), curr = numeric())
 				}
 				outdf <- merge(merge(tbl.user[tbl.user$status == 1, c("openid", "publicname", "jointime")], tbl.bookhis, all.x = TRUE), tbl.bookcur, all.x = TRUE)
+				outdf <- merge(outdf, tbl.bookcur1, all.x = TRUE)
 				outdf$meanchar <- round(outdf$totalnchar / outdf$total, 0)
 				
 				tbl.user$leavetime[is.na(tbl.user$leavetime)] <- as.character(Sys.time())
@@ -24,13 +26,14 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 				outdf$thismon <- 0
 				outdf$thismon[substr(outdf$jointime, 1, 7) == month] <- 1
 				
-				OUT <- select(outdf, publicname, curr, total, days, meanchar, thismon)
+				OUT <- select(outdf, publicname, curr, total, days, meanchar, thismon, curr1)
 				OUT$curr[is.na(OUT$curr)] <- 0
+				OUT$curr1[is.na(OUT$curr1)] <- 0
 				OUT$total[is.na(OUT$total)] <- 0
 				OUT$meanchar[is.na(OUT$meanchar)] <- 0
 				OUT <- arrange(OUT, desc(curr), desc(total), desc(days), desc(meanchar))
 				OUT$rank <- 1:nrow(OUT)
-				OUT <- OUT[, c(7, 1:6)]
+				#OUT <- OUT[, c(7, 1:6)]
 				
 				#df1 <- OUT[OUT$curr > 0, ]
 				#df2 <- OUT[OUT$curr == 0 & OUT$thismon == 1, ]
@@ -39,9 +42,9 @@ getRank <- function(month = substr(Sys.time(), 1, 7), picfile = NULL) {
 				#df2$safe <- 1
 				#df3$safe <- 0				
 				#OUTDF <- rbind(df1, df2, df3)			
-				OUTDF <- OUT
+				OUTDF <- OUT[, c(8, 1:6)]
 				OUTDF$safe <- 1
-				OUTDF$safe[OUT$curr == 0 & OUT$thismon == 0] <- 0
+				OUTDF$safe[OUT$curr1 == 0 & OUT$thismon == 0] <- 0
 				
 				OUTDF$thismon <- NULL
 				rownames(OUTDF) <- NULL

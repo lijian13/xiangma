@@ -4,10 +4,10 @@ analyzeBook <- function(year = NULL, picfile = NULL) {
 				CONN <- .createConn()
 				
 				if (is.null(year)) {
-					commentdf <- dbGetQuery(CONN, "select msgid, doubanid as id, openid, week, time from comment_log where doubanid is null or doubanid not like 'LW%'")
+					commentdf <- dbGetQuery(CONN, "select msgid, doubanid as id, openid, week, time from comment_log where include is null or include = 1")
 				} else {
 					commentdf <- dbGetQuery(CONN, paste0("select msgid, doubanid as id, openid, week, time from comment_log where time like '", year, 
-									"%' and (doubanid is null or doubanid not like 'LW%')"))
+									"%' and (include is null or include = 1)"))
 				}
 				
 				booklistdf <- dbGetQuery(CONN, "select distinct id, author, tags from douban_list")

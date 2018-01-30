@@ -8,7 +8,7 @@ analyzeAnual <- function(nm, year = substr(Sys.time(), 1, 4), picfile = NULL) {
 				openid <- userdf$openid[1]
 				commentdf <- dbGetQuery(CONN, paste0("select * from comment_log a left join (select distinct id, author, tags from douban_list) b on a.doubanid=b.id where openid = '", 
 								openid, "' and time like '", year, "%' order by time"))		
-				commentdf <- commentdf[!grepl("^LW", commentdf$doubanid), ]
+				commentdf <- commentdf[commentdf$include == 1, ]
 				Encoding(commentdf$doubantitle) <- "UTF-8"
 				Encoding(commentdf$title) <- "UTF-8"
 				Encoding(commentdf$tags) <- "UTF-8"
