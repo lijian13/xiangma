@@ -32,3 +32,17 @@
 	OUT <- crossprod(wdf$freq, wdf$freq2)[1,1] / (sum(wdf$freq^2)^0.5 * sum(wdf$freq2^2)^0.5)
 	return(OUT)
 }
+
+.dealwithTags <- function(tagv, maxn = 3, maxc = 5) {
+	s1 <- unlist(strsplit(tagv, split = ";"))
+	s2 <- s1[!grepl(".*,.*,", s1)]
+	
+	OUT <- as.data.frame(do.call("rbind", strsplit(s2, split = ",")), stringsAsFactors = FALSE)
+	names(OUT) <- c("tag", "freq")
+	OUT <- OUT[nchar(OUT$tag) <= maxc, ]
+
+	OUT$freq <- log(as.numeric(OUT$freq))
+	OUT <- summarise(group_by(OUT, tag), freq = sum(freq))
+	OUT <- arrange(OUT, desc(freq))
+	return(OUT[1:min(maxn, nrow(OUT)), ])
+}

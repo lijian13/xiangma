@@ -1,7 +1,15 @@
 
-removeDuplication <- function(threshold = 0.8, remark = FALSE) {	
+removeDuplication <- function(threshold = 0.8, remark = FALSE, clear = FALSE) {	
 	tryCatch({
 				CONN <- .createConn()
+				if (identical(clear, TRUE)) {
+					strrm <- paste0("delete from comment_log where msgid in (", 
+							"select min(msgid) as msgid from comment_log where time like '", substr(Sys.time(), 1, 7),
+							"%' group by openid, title having count(openid) > 1)")
+					rs <- dbSendQuery(CONN, strrm)	
+					dbClearResult(rs)
+				}
+				
 				commdf <- dbGetQuery(CONN, "select * from comment_log where doubanid in (select doubanid from comment_log group by openid, doubanid having count(openid) > 1)")
 
 				d1 <- summarise (group_by(commdf, openid, doubanid), num = length(msgid))

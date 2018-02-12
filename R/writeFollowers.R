@@ -38,7 +38,10 @@ writeFollowers <- function(wxobj, updatestatus = FALSE) {
 					if (length(member.add) > 0) {
 						tmp.add <- tbl.web[tbl.web$openid %in% member.add, ]
 						out.add <- data.frame(openid = tmp.add$openid, publicname = tmp.add$remark, 
-								jointime = tmp.add$subscribe_time, leavetime = NA, status = 1)
+								jointime = tmp.add$subscribe_time, leavetime = NA, status = 1, stringsAsFactors = FALSE)
+						if (any(member.add %in% tbl.status$openid)) {
+							out.add$jointime[out.add$openid %in% tbl.status$openid] <- as.character(Sys.time())
+						}
 						dbWriteTable(CONN, "member_log", out.add, row.names = FALSE, append = TRUE)
 						cat(paste0(length(member.add), " group members have been added!\n"))
 					}
