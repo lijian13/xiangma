@@ -46,3 +46,16 @@
 	OUT <- arrange(OUT, desc(freq))
 	return(OUT[1:min(maxn, nrow(OUT)), ])
 }
+
+.dealwithTagsTM <- function(tagv) {
+	s1 <- unlist(strsplit(tagv, split = ";"))
+	s2 <- s1[!grepl(".*,.*,", s1)]
+	
+	OUT <- as.data.frame(do.call("rbind", strsplit(s2, split = ",")), stringsAsFactors = FALSE)
+	names(OUT) <- c("tag", "hot")
+	OUT$tag <- gsub("^\\s+", "", OUT$tag)
+	
+	return(paste0(OUT$tag, collapse = " "))
+}
+
+

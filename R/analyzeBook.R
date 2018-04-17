@@ -52,6 +52,9 @@ analyzeBook <- function(year = NULL, picfile = NULL) {
 							units = "px", pointsize = 18, quality = 100, bg = "white", family = "")
 					par(mfrow = c(4, 1), mar = c(9,5,1,2))
 					plot(num~week, data = weekdf, type = "l", xlab = "\u5468\u6570", ylab = "\u8BFB\u4E66\u91CF")
+					points(num~week, data = weekdf[which.max(weekdf$num[-nrow(weekdf)]), ], pch = 19 , cex = 1.5, col = "red")
+					points(num~week, data = weekdf[which.min(weekdf$num[-nrow(weekdf)]), ], pch = 19 , cex = 1.5, col = "red")
+					abline(h = tail(weekdf$num, n = 1), col = "red", lty = 2)
 					if (is.null(year)) {
 						tmp.ts <- ts(monthdf$num, frequency = 12, start = c(2015, 11))
 						tmp.at <- seq(from = 2015+10/12, by = 1/12, length.out=length(tmp.ts))
