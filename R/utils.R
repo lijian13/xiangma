@@ -33,17 +33,34 @@
 	return(OUT)
 }
 
-.dealwithTags <- function(tagv, maxn = 3, maxc = 5) {
-	s1 <- unlist(strsplit(tagv, split = ";"))
-	s2 <- s1[!grepl(".*,.*,", s1)]
+.dealwithTags <- function(tagv, maxn = 4, maxc = 5, maxlabel = 5) {
 	
-	OUT <- as.data.frame(do.call("rbind", strsplit(s2, split = ",")), stringsAsFactors = FALSE)
-	names(OUT) <- c("tag", "freq")
+	a1 <- strsplit(tagv, split = ";")
+	a2 <- lapply(a1, FUN = function(X) X[!grepl(".*,.*,", X)])
+	a3 <- a2[sapply(a2, length) > 0]
+	a4 <- lapply(a3, FUN = function(X) as.data.frame(do.call("rbind", strsplit(X, split = ",")), stringsAsFactors = FALSE))
+	a5 <- lapply(a4, FUN = function(X) {names(X) <- c("tag", "freq"); X$freq <- as.numeric(X$freq); X$freq <- X$freq / max(X$freq); return(X)})
+	a6 <- lapply(a5, FUN = function(X) X[1:min(5, nrow(X)),])
+	
+	OUT <- do.call("rbind", a6)
 	OUT <- OUT[nchar(OUT$tag) <= maxc, ]
-
-	OUT$freq <- log(as.numeric(OUT$freq))
+	OUT$tag <- toTrad(OUT$tag, rev = TRUE)
+	OUT$tag[OUT$tag == "\u79D1\u5E7B\u5C0F\u8BF4"] <- "\u79D1\u5E7B"
+	OUT$tag[OUT$tag == "\u5FC3\u7406"] <- "\u5FC3\u7406\u5B66"
+	OUT$freq <- (OUT$freq)^0.5
 	OUT <- summarise(group_by(OUT, tag), freq = sum(freq))
 	OUT <- arrange(OUT, desc(freq))
+	
+	#s1 <- unlist(strsplit(tagv, split = ";"))
+	#s2 <- s1[!grepl(".*,.*,", s1)]
+	
+	#OUT <- as.data.frame(do.call("rbind", strsplit(s2, split = ",")), stringsAsFactors = FALSE)
+	#names(OUT) <- c("tag", "freq")
+	#OUT <- OUT[nchar(OUT$tag) <= maxc, ]
+
+	#OUT$freq <- log(as.numeric(OUT$freq))
+	#OUT <- summarise(group_by(OUT, tag), freq = sum(freq))
+	#OUT <- arrange(OUT, desc(freq))
 	return(OUT[1:min(maxn, nrow(OUT)), ])
 }
 
