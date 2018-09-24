@@ -44,11 +44,12 @@ getBookRank <- function(month = NULL, n = 20, picfile = NULL) {
 				bookdf <- merge(bookdf, booklistdf, all.x = TRUE)
 				bookdf <- bookdf[order(bookdf$num, bookdf$num1, -bookdf$age, decreasing = TRUE), ]
 				bookdf$author <- sapply(strsplit(bookdf$author, split = ","), "[", 1)
-				bookdf$author <- gsub("\\[.*\\]", "", bookdf$author)
-				bookdf$author <- gsub("\uFF08.*\uFF09", "", bookdf$author)
-				bookdf$author <- gsub("\\(.*\\)", "", bookdf$author)
-				bookdf$author <- gsub("\u3014.*\u3015", "", bookdf$author)
-				bookdf$author <- gsub("\u3010.*\u3011", "", bookdf$author)
+				bookdf$author <- gsub("\\[.*?\\]", "", bookdf$author)
+				bookdf$author <- gsub("\uFF08.*?\uFF09", "", bookdf$author)
+				bookdf$author <- gsub("\uFF3B.*?\uFF3D", "", bookdf$author)
+				bookdf$author <- gsub("\\(.*?\\)", "", bookdf$author)
+				bookdf$author <- gsub("\u3014.*?\u3015", "", bookdf$author)
+				bookdf$author <- gsub("\u3010.*?\u3011", "", bookdf$author)
 				bookdf$author <- gsub("\\s+", "", bookdf$author)
 				
 				OUTDF <- bookdf[1:min(n, nrow(bookdf)), ]
