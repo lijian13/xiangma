@@ -1,11 +1,21 @@
 
-getUserRank <- function(picfile = NULL) {
+getUserRank <- function(picfile = NULL, newweight = FALSE) {
 	tryCatch({
 				CONN <- .createConn()
 				
 				tbl.user <- dbGetQuery(CONN, "SELECT * from member_log")
-				tbl.bookhis <- dbGetQuery(CONN, "SELECT openid, count(openid) as total, sum(char_length(content)) as totalnchar from comment_log where include is null or include = 1 group by openid")		
-				tbl.label <- dbGetQuery(CONN, "select openid, doubanid from comment_log where openid in (select openid from member_log where status = 1)")
+				tbl.commentlog <- dbGetQuery(CONN, "select openid, doubanid, time, char_length(content) as nchar, include from comment_log where openid in (select openid from member_log where status = 1)")
+				mintime <- strptime("2015-11-25 11:38:00", "%Y-%m-%d %H:%M:%S")
+				maxtime <- Sys.time()
+				tbl.commentlog <- tbl.commentlog[tbl.commentlog$include %in% c(NA, 1), ]
+				tbl.commentlog$score <- as.numeric(difftime(strptime(tbl.commentlog$time, "%Y-%m-%d %H:%M:%S"), mintime, units = "days")) / as.numeric(difftime(maxtime, mintime, units = "days"))
+				if (identical(newweight, TRUE)) {	
+					tbl.bookhis <- summarise(group_by(tbl.commentlog, openid), total = length(openid), totalnchar = sum(nchar), score = sum(score))
+					tbl.label <- tbl.commentlog[, c("openid", "doubanid")]
+				} else {
+					tbl.bookhis <- dbGetQuery(CONN, "SELECT openid, count(openid) as total, sum(char_length(content)) as totalnchar from comment_log where include is null or include = 1 group by openid")		
+					tbl.label <- dbGetQuery(CONN, "select openid, doubanid from comment_log where openid in (select openid from member_log where status = 1)")
+				}	
 				tbl.douban <- dbGetQuery(CONN, "select id as doubanid, tags from douban_list")
 				Encoding(tbl.user$publicname) <- "UTF-8"
 				Encoding(tbl.douban$tags) <- "UTF-8"
@@ -28,13 +38,23 @@ getUserRank <- function(picfile = NULL) {
 				outdf <- merge(outdf, tbl.tags, all.x = TRUE)
 				outdf$tags[is.na(outdf$tags)] <- ""
 				
-				OUT <- select(outdf, publicname, total, days, meanchar, dura, tags)
-				OUT$total[is.na(OUT$total)] <- 0
-				OUT$meanchar[is.na(OUT$meanchar)] <- 0
-				OUT <- arrange(OUT, desc(total), desc(days), desc(meanchar), dura)
-				OUT$rank <- 1:nrow(OUT)
-		
-				OUTDF <- OUT[, c(7, 1:6)]
+				if (identical(newweight, TRUE)) {	
+					OUT <- select(outdf, publicname, total, days, meanchar, dura, tags, score)
+					OUT$total[is.na(OUT$total)] <- 0
+					OUT$meanchar[is.na(OUT$meanchar)] <- 0
+					OUT <- arrange(OUT, desc(score), desc(total), desc(days), desc(meanchar), dura)
+					OUT$rank <- 1:nrow(OUT)
+					OUTDF <- OUT[, c(8, 1:6)]
+					
+				} else {
+					OUT <- select(outdf, publicname, total, days, meanchar, dura, tags)
+					OUT$total[is.na(OUT$total)] <- 0
+					OUT$meanchar[is.na(OUT$meanchar)] <- 0
+					OUT <- arrange(OUT, desc(total), desc(days), desc(meanchar), dura)
+					OUT$rank <- 1:nrow(OUT)
+					OUTDF <- OUT[, c(7, 1:6)]
+				}	
+				
 				rownames(OUTDF) <- NULL
 				OUTDF$days <- ceiling(OUTDF$days)
 				colnames(OUTDF) <- c("\u6392\u540D", "\u6635\u79F0", "\u603B\u6570", "\u7FA4\u9F84(\u5929)", "\u4E66\u8BC4\u5747\u5B57", "\u6BCF\u4E66\u5929\u6570", "\u70ED\u95E8\u6807\u7B7E")
