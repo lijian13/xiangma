@@ -3,7 +3,7 @@
 insertReadRecord <- function(user, book, text, currtime = as.character(Sys.time())) {	
 	tryCatch({
 				CONN <- .createConn()
-				tbl.user <- dbGetQuery(CONN, "SELECT * from groupmember")	
+				tbl.user <- dbGetQuery(CONN, "SELECT * from member_log")	
 				tbl.user$publicname <- toUTF8(tbl.user$publicname)
 				user <- toUTF8(user)
 				book <- toUTF8(book)

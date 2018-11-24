@@ -12,7 +12,7 @@ getBookRank <- function(month = NULL, n = 20, picfile = NULL) {
 					 strtitle <- paste0(month, "\u5E74\u54CD\u9A6C\u8BFB\u4E66\u7FA4\u70ED\u95E8\u4E66\u7C4D\u6392\u884C\u699C", 
 							 "\n\uff08\u5F53\u5E74\u8BFB\u4E66\u603B\u6570\u4E3A ")
 							 
-				} else if (!is.null(month) && grepl("^20[0-9][0-9]-[0-1][1-9]$", month)) {
+				} else if (!is.null(month) && grepl("^20[0-9][0-9]-[0-1][0-9]$", month)) {
 					strsql1 <- paste0("select doubanid as id, doubantitle as title, count(doubanid) as num, ", 
 							"avg(date_part('epoch', current_timestamp - to_timestamp(time, 'yyyy-mm-dd hh24:mi:ss'))::NUMERIC / 86400) as age ", 
 							"from comment_log where time like '", month, "%' and include = 1 group by doubanid, doubantitle")
