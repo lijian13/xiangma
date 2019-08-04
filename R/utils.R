@@ -23,8 +23,8 @@
 }
 
 .similarity <- function(s1, s2) {
-	wdf1 <- createWordFreq(segmentCN(s1))
-	wdf2 <- createWordFreq(segmentCN(s2))
+	wdf1 <- createWordFreq(segmentCN(s1), onlyCN = FALSE)
+	wdf2 <- createWordFreq(segmentCN(s2), onlyCN = FALSE)
 	names(wdf2)[2] <- "freq2"
 	wdf <- merge(wdf1, wdf2, all.x = TRUE, all.y = TRUE)
 	wdf$freq[is.na(wdf$freq)] <- 0
