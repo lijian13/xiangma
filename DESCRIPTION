@@ -8,5 +8,5 @@ Maintainer: Dawei Lang <chiffonlang@icloud.com>
 Description: This package provides soem useful functions for xiangma reading.
 Version: 0.0-1
 Date: 2017-11-26
-Depends: R (>= 3.0.0), Rweixin, jsonlite, RPostgreSQL, dplyr, tmcn, jiebaR, grid, gridExtra, gtable, RCurl
+Depends: R (>= 3.0.0), Rweixin, jsonlite, RPostgreSQL, dplyr, tmcn, Rwordseg, jiebaR, grid, gridExtra, gtable, RCurl
 
