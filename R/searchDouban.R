@@ -37,6 +37,61 @@ searchDouban <- function(q, count = 20, detail = FALSE) {
 
 
 searchDoubanBook <- function(id, detail = FALSE) {
+	
+	html0 <- read_html(paste0("https://book.douban.com/subject/", id))
+	node1 <- html_nodes(html0, xpath = "//div[@id='wrapper']/h1")
+	s1 <- strstrip(html_text(node1))
+	node2 <- html_nodes(html0, xpath = "//div[@id='wrapper']/div[@id='content']//div[@class='indent']//div[@id='info']/span/a")
+	s2 <- strstrip(html_text(node2))
+	node3 <- html_nodes(html0, xpath = "//div[@id='wrapper']/div[@id='content']//div[@class='indent']//div[@id='info']/span")
+	s3 <- strstrip(gsub(":.*$", ":", html_text(node3)))
+	node4 <- html_nodes(html0, xpath = "//div[@id='wrapper']/div[@id='content']//div[@class='indent']//div[@id='info']")
+	s4 <- strstrip(html_text(node4))
+	node5 <- html_nodes(html0, xpath = "//div[@class='related_info']//div[@id='db-tags-section']/div[@class='indent']/span")
+	s5 <- strstrip(html_text(node5))
+	node6 <- html_nodes(html0, xpath = "//div[@class='rating_self clearfix']//div[@class='rating_sum']//a[@class='rating_people']/span")
+	s6 <- strstrip(html_text(node6))
+	node7 <- html_nodes(html0, xpath = "//div[@class='rating_self clearfix']/strong[@property='v:average']")
+	s7 <- strstrip(html_text(node7))
+	node8 <- html_nodes(html0, xpath = "//div[@class='related_info']/div[@id='link-report']//div[@class='intro']/p")
+	s8 <- strstrip(html_text(node8))
+	
+	infodf <- data.frame(var = s3, value = strsplit(s4, paste0(s3, collapse = "|"))[[1]][-1], stringsAsFactors = FALSE)
+	infodf$value <- sapply(strsplit(gsub("/", "", infodf$value), "\\s+"), FUN = function(X) paste0(X[-1], collapse = ","))
+	
+	OUT <- data.frame(id = id,
+			title = s1,
+			subtitle = ifelse("\u526F\u6807\u9898:" %in% infodf$var, infodf$value[infodf$var == "\u526F\u6807\u9898:"], ""),
+			author = ifelse("\u4F5C\u8005:" %in% infodf$var, infodf$value[infodf$var == "\u4F5C\u8005:"], ""),
+			translator = ifelse("\u8BD1\u8005:" %in% infodf$var, infodf$value[infodf$var == "\u8BD1\u8005:"], ""),
+			pubdate = ifelse("\u51FA\u7248\u5E74:" %in% infodf$var, infodf$value[infodf$var == "\u51FA\u7248\u5E74:"], ""),
+			publisher = ifelse("\u51FA\u7248\u793E:" %in% infodf$var, infodf$value[infodf$var == "\u51FA\u7248\u793E:"], ""),
+			pages =ifelse("\u9875\u6570:" %in% infodf$var, infodf$value[infodf$var == "\u9875\u6570:"], ""),
+			price = as.numeric(gsub("[^0-9\\.]", "", ifelse("\u5B9A\u4EF7:" %in% infodf$var, infodf$value[infodf$var == "\u5B9A\u4EF7:"], ""))),
+			isbn10 = "",
+			isbn13 = ifelse("ISBN:" %in% infodf$var, infodf$value[infodf$var == "ISBN:"], ""),
+			ratingnum = ifelse(length(s6) > 0, as.numeric(s6), 0),
+			ratingavg = ifelse(length(s7) > 0, as.numeric(s6), 0),
+			seriesid = NA,
+			seriestitle = ifelse("\u4E1B\u4E66:" %in% infodf$var, infodf$value[infodf$var == "\u4E1B\u4E66:"], ""),
+			binding = ifelse("\u05F0\u05A1:" %in% infodf$var, infodf$value[infodf$var == "\u05F0\u05A1:"], ""),
+			origin_title = NA,
+			image = NA,
+			alt = NA,
+			tags = ifelse(length(s5) > 0, paste0(paste(s5, length(s5):1, sep = ","), collapse = ";"), NA),
+			catalog = NA,
+			author_intro = NA,
+			summary = ifelse(length(s8) > 0, paste0(s8, collapse = "\n"), NA),	
+			stringsAsFactors = FALSE)
+
+	if (identical(detail, FALSE)) {
+		OUT <- OUT[, c("id", "title", "subtitle", "author", "pubdate", "translator", "publisher", "pages", "price", "isbn10", "isbn13", "ratingnum", "ratingavg")]
+	}
+	return(OUT)	
+}
+
+# api (old)
+searchDoubanBook.api <- function(id, detail = FALSE) {
 	out.json <- getForm(paste0("https://api.douban.com/v2/book/", id))
 	out.list <- fromJSON(out.json)
 	
@@ -64,12 +119,13 @@ searchDoubanBook <- function(id, detail = FALSE) {
 			author_intro = .transChar(out.list$author_intro),
 			summary = .transChar(out.list$summary),	
 			stringsAsFactors = FALSE)
-
+	
 	if (identical(detail, FALSE)) {
 		OUT <- OUT[, c("id", "title", "subtitle", "author", "pubdate", "translator", "publisher", "pages", "price", "isbn10", "isbn13", "ratingnum", "ratingavg")]
 	}
 	return(OUT)	
 }
+
 
 
 

@@ -35,7 +35,7 @@ fixDoubanID <- function(msgid, doubanid) {
 					tmp.douban <- suppressWarnings(searchDoubanBook(doubanid, detail = TRUE))
 					dbWriteTable(CONN, "douban_list", tmp.douban, row.names = FALSE, append = TRUE)
 				}  else {
-					tmp.douban <- dbGetQuery(CONN, paste0("SELECT * from douban_list where id = '", doubanid, "'"))
+					tmp.douban <- tmp.exists
 				}	
 				if (grepl("^LW", doubanid)) {
 					strinclude = ", include = 0"
