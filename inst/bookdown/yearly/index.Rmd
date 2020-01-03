@@ -1,0 +1,51 @@
+--- 
+title: "“响马读书”群YEAR年度分析报告"
+author: "响马读书编辑部"
+date: "DATE"
+output: pdf_document
+bibliography:
+- book.bib
+- packages.bib
+description: 
+documentclass: ctexbook
+geometry:
+- b5paper
+- tmargin=2.5cm
+- bmargin=2.5cm
+- lmargin=3.5cm
+- rmargin=2.5cm
+github-repo: 
+link-citations: yes
+lof: no
+lot: no
+colorlinks: yes
+site: bookdown::bookdown_site
+biblio-style: apalike
+classoption: openany
+---
+
+```{r setup, include=FALSE}
+options(
+  htmltools.dir.version = FALSE, formatR.indent = 2, width = 55, digits = 4
+)
+
+library(xiangma)
+CONN <- .createConn()
+commdf0 <- dbGetQuery(CONN, "SELECT openid, msgid, doubanid, time, CHARACTER_LENGTH(content)as nchar, include from comment_log")
+userdf0 <- dbGetQuery(CONN, "SELECT * from member_log")
+bookdf0 <- dbGetQuery(CONN, "SELECT id, title, author from douban_list")
+dbDisconnect(CONN)
+Encoding(bookdf0$title) <- "UTF-8"
+Encoding(bookdf0$author) <- "UTF-8"
+Encoding(userdf0$publicname) <- "UTF-8"
+```
+
+
+\mainmatter
+
+# 概述 {#chap1}
+
+
+响马读书群于“`r format(min(commdf0$time), format = "%Y-%m-%d")`”组建并提交第一篇书评，至今已积累了`r sum(commdf0$include %in% 1)`篇书评。
+
+

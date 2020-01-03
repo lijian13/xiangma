@@ -1,5 +1,8 @@
 
 
+.iconvutf8 <- function(X) {
+	iconv(X, "UTF-8", "UTF-8")
+}
 
 .createDBConfig <- function(host = "localhost", port = "5432", dbname = "xiangma", user = "", password = "") {
 	connpath <- file.path(Sys.getenv("APPDATA"), "xiangma", "db")
@@ -24,12 +27,14 @@
 
 .similarity <- function(s1, s2) {
 	wdf1 <- createWordFreq(segmentCN(s1), onlyCN = FALSE)
-	wdf2 <- createWordFreq(segmentCN(s2), onlyCN = FALSE)
-	names(wdf2)[2] <- "freq2"
-	wdf <- merge(wdf1, wdf2, all.x = TRUE, all.y = TRUE)
-	wdf$freq[is.na(wdf$freq)] <- 0
-	wdf$freq2[is.na(wdf$freq2)] <- 0
-	OUT <- crossprod(wdf$freq, wdf$freq2)[1,1] / (sum(wdf$freq^2)^0.5 * sum(wdf$freq2^2)^0.5)
+	if (length(s2) == 1) {
+		wdf2 <- list(createWordFreq(segmentCN(s2), onlyCN = FALSE))
+	} else {
+		wdf2 <- lapply(segmentCN(s2), createWordFreq,  onlyCN = FALSE)
+	}
+	wdf <- lapply(wdf2, FUN = function(X) {names(X)[2] <- "freq2"; merge(wdf1, X, all.x = TRUE, all.y = TRUE)})
+	wdf <- lapply(wdf, FUN = function(X) {X$freq[is.na(X$freq)] <- 0; X$freq2[is.na(X$freq2)] <- 0;X})
+	OUT <- max(sapply(wdf, FUN = function(X) crossprod(X$freq, X$freq2)[1,1] / (sum(X$freq^2)^0.5 * sum(X$freq2^2)^0.5)))
 	return(OUT)
 }
 

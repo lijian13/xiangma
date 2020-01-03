@@ -1,7 +1,7 @@
 <project name = "xiangma" default = "install" basedir = ".">
 	
 	<property environment = "env" />
-	<property name = "package.name" value = "Rweixin" />
+	<property name = "package.name" value = "xiangma" />
 	<property name = "r.home" value = "D:/Software/R/R-3.5.3" />
 	<property name = "rtools.home" value = "C:/Rtools" />
 	<property name = "path" value = "${r.home}/bin;${rtools.home}/bin;"/>
