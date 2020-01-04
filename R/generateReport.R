@@ -12,10 +12,16 @@ generateReport <- function(reportdate = substr(Sys.time(), 1, 11), reporttype = 
 				zz <- file("_bookdown.yml", "w+", encoding = "UTF-8")
 				writeLines(file.bd, zz)
 				close(zz)
+				file.idx <- readLines("index.Rmd", encoding = "UTF-8")
+				file.idx <- gsub("YEAR", substr(reportdate, 1, 4), file.idx)
+				file.idx <- gsub("DATE", reportdate, file.idx)
+				zz <- file("index.Rmd", "w+", encoding = "UTF-8")
+				writeLines(file.idx, zz)
+				close(zz)
 				
 				require(bookdown)
 				render_book("index.Rmd", "bookdown::pdf_book")
-				outfile <- file.path(tmpdir, reporttype, "_book", "xiangma_yearly.pdf")
+				outfile <- file.path(tmpdir, reporttype, "_book", paste0("xiangma_", substr(reportdate, 1, 4), ".pdf"))
 				if (file.exists(outfile)) {
 					file.copy(from = outfile, to = old.wd)
 				}

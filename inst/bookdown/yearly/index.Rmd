@@ -29,15 +29,21 @@ options(
   htmltools.dir.version = FALSE, formatR.indent = 2, width = 55, digits = 4
 )
 
+thisyear <- "YEAR"
 library(xiangma)
+library(showtext)
 CONN <- .createConn()
-commdf0 <- dbGetQuery(CONN, "SELECT openid, msgid, doubanid, time, CHARACTER_LENGTH(content)as nchar, include from comment_log")
+commdf0 <- dbGetQuery(CONN, "SELECT openid, msgid, doubanid, time, CHARACTER_LENGTH(trim(content))as nchar, include from comment_log")
 userdf0 <- dbGetQuery(CONN, "SELECT * from member_log")
 bookdf0 <- dbGetQuery(CONN, "SELECT id, title, author from douban_list")
 dbDisconnect(CONN)
 Encoding(bookdf0$title) <- "UTF-8"
 Encoding(bookdf0$author) <- "UTF-8"
 Encoding(userdf0$publicname) <- "UTF-8"
+commdf1 <- commdf0[commdf0$include %in% 1, ]
+commdf2 <- commdf1[substr(commdf1$time,1,4)==thisyear, ]
+year.start <- strptime(paste0(thisyear, "-01-01 00:00:00"), format = "%Y-%m-%d %H:%M:%S")
+year.end <- strptime(paste0(as.numeric(thisyear)+1, "-01-01 00:00:00"), format = "%Y-%m-%d %H:%M:%S") - 1
 ```
 
 
@@ -45,7 +51,12 @@ Encoding(userdf0$publicname) <- "UTF-8"
 
 # 概述 {#chap1}
 
+响马读书群于`r substr(min(commdf0$time), 1, 4)`年`r as.numeric(substr(min(commdf0$time), 6, 7))`月`r as.numeric(substr(min(commdf0$time), 9, 10))`日组建并提交第一篇书评，至今已积累了`r format(nrow(commdf1), big.mark = ",")`篇书评，共计`r format(sum(commdf1$nchar, na.rm = TRUE), big.mark = ",")`字，平均每篇书评`r round(sum(commdf1$nchar, na.rm = TRUE)/nrow(commdf1), 0)`字，书评字数中位数为`r median(commdf1$nchar, na.rm = TRUE)`。本年度群友提交的书评数为`r format(nrow(commdf2), na.rm = TRUE)`，书评总字数为`r format(sum(commdf2$nchar, na.rm = TRUE), big.mark = ",")`，平均每篇书评`r round(sum(commdf2$nchar, na.rm = TRUE)/nrow(commdf2), 0)`字，书评字数中位数为`r median(commdf2$nchar, na.rm = TRUE)`。图\@ref(fig:pic01)显示了每个年度的书评数和总字数。
 
-响马读书群于“`r format(min(commdf0$time), format = "%Y-%m-%d")`”组建并提交第一篇书评，至今已积累了`r sum(commdf0$include %in% 1)`篇书评。
+```{r pic01, fig.showtext = TRUE, fig.cap='各年度书评数和书评字数', out.width='90%', fig.width=9, fig.heigth=3, fig.align='center', echo=FALSE, message=FALSE}
+par(mar = c(4,4,1,1), mfrow = c(1,2))
+barplot(table(substr(commdf1$time,1,4)), ylab="书评数")
+barplot(sapply(split(commdf1$nchar, f = substr(commdf1$time,1,4)), sum, na.rm = TRUE), ylab="书评字数")
+```
 
 
