@@ -16,8 +16,9 @@ geometry:
 - rmargin=2.5cm
 github-repo: 
 link-citations: yes
-lof: no
-lot: no
+toc: True
+lof: False
+lot: False
 colorlinks: yes
 site: bookdown::bookdown_site
 biblio-style: apalike
@@ -35,15 +36,38 @@ library(showtext)
 CONN <- .createConn()
 commdf0 <- dbGetQuery(CONN, "SELECT openid, msgid, doubanid, time, CHARACTER_LENGTH(trim(content))as nchar, include from comment_log")
 userdf0 <- dbGetQuery(CONN, "SELECT * from member_log")
-bookdf0 <- dbGetQuery(CONN, "SELECT id, title, author from douban_list")
+bookdf0 <- dbGetQuery(CONN, "SELECT id as doubanid, title as doubantitle, author from douban_list")
 dbDisconnect(CONN)
-Encoding(bookdf0$title) <- "UTF-8"
+Encoding(bookdf0$doubantitle) <- "UTF-8"
 Encoding(bookdf0$author) <- "UTF-8"
 Encoding(userdf0$publicname) <- "UTF-8"
-commdf1 <- commdf0[commdf0$include %in% 1, ]
+commdf1 <- commdf0[commdf0$include %in% 1 & substr(commdf0$time,1,4) <= thisyear, ]
 commdf2 <- commdf1[substr(commdf1$time,1,4)==thisyear, ]
 year.start <- strptime(paste0(thisyear, "-01-01 00:00:00"), format = "%Y-%m-%d %H:%M:%S")
 year.end <- strptime(paste0(as.numeric(thisyear)+1, "-01-01 00:00:00"), format = "%Y-%m-%d %H:%M:%S") - 1
+
+userdf_v1 <- .verifyUsers(userdf0, year.start, year.end)
+userdf_v2 <- .verifyUsers(userdf0, "2000-01-01 00:00:00", year.start)
+userdf_v3 <- .verifyUsers(userdf0, year.start, paste0(substr(year.start, 1, 10), " 23:59:59"))
+userdf_v4 <- .verifyUsers(userdf0, paste0(substr(year.end, 1, 10), " 00:00:00"), year.end)
+
+userdf_new <- userdf0[userdf0$openid %in% setdiff(userdf_v1$openid[userdf_v1$verify == 1], userdf_v2$openid[userdf_v2$verify == 1]), ]
+userdf_newsur <- userdf_new[userdf_new$openid %in% userdf_v4$openid[userdf_v4$verify == 1], ]
+
+commdf1 <- merge(commdf1, bookdf0, all.x = TRUE)
+commdf2 <- merge(commdf2, bookdf0, all.x = TRUE)
+hotdf1 <- arrange(summarise(group_by(commdf1, doubanid, doubantitle, author), count = length(doubanid)), desc(count))
+hotdf2 <- arrange(summarise(group_by(commdf2, doubanid, doubantitle, author), count = length(doubanid)), desc(count))
+autdf1 <- arrange(summarise(group_by(commdf1, author), count = length(doubanid)), desc(count))
+autdf2 <- arrange(summarise(group_by(commdf2, author), count = length(doubanid)), desc(count))
+autdf1 <- autdf1[nzchar(autdf1$author), ]
+autdf2 <- autdf2[nzchar(autdf2$author), ]
+rderdf1 <- arrange(summarise(group_by(commdf1, openid), count = length(doubanid)), count)
+rderdf1$num <- (1:nrow(rderdf1))/ nrow(rderdf1)
+rderdf1$cum <- cumsum(rderdf1$count)/ sum(rderdf1$count)
+rderdf2 <- arrange(summarise(group_by(commdf2, openid), count = length(doubanid)), count)
+rderdf2$num <- (1:nrow(rderdf2))/ nrow(rderdf2)
+rderdf2$cum <- cumsum(rderdf2$count)/ sum(rderdf2$count)
 ```
 
 
@@ -51,12 +75,74 @@ year.end <- strptime(paste0(as.numeric(thisyear)+1, "-01-01 00:00:00"), format =
 
 # 概述 {#chap1}
 
-响马读书群于`r substr(min(commdf0$time), 1, 4)`年`r as.numeric(substr(min(commdf0$time), 6, 7))`月`r as.numeric(substr(min(commdf0$time), 9, 10))`日组建并提交第一篇书评，至今已积累了`r format(nrow(commdf1), big.mark = ",")`篇书评，共计`r format(sum(commdf1$nchar, na.rm = TRUE), big.mark = ",")`字，平均每篇书评`r round(sum(commdf1$nchar, na.rm = TRUE)/nrow(commdf1), 0)`字，书评字数中位数为`r median(commdf1$nchar, na.rm = TRUE)`。本年度群友提交的书评数为`r format(nrow(commdf2), na.rm = TRUE)`，书评总字数为`r format(sum(commdf2$nchar, na.rm = TRUE), big.mark = ",")`，平均每篇书评`r round(sum(commdf2$nchar, na.rm = TRUE)/nrow(commdf2), 0)`字，书评字数中位数为`r median(commdf2$nchar, na.rm = TRUE)`。图\@ref(fig:pic01)显示了每个年度的书评数和总字数。
+响马读书群于`r substr(min(commdf0$time), 1, 4)`年`r as.numeric(substr(min(commdf0$time), 6, 7))`月`r as.numeric(substr(min(commdf0$time), 9, 10))`日组建并提交第一篇书评，至今已积累了`r format(nrow(commdf1), big.mark = ",")`篇书评，共计`r format(sum(commdf1$nchar, na.rm = TRUE), big.mark = ",")`字，平均每篇书评`r round(sum(commdf1$nchar, na.rm = TRUE)/nrow(commdf1), 0)`字，书评字数中位数为`r median(commdf1$nchar, na.rm = TRUE)`。本年度群友提交的书评数为`r format(nrow(commdf2), na.rm = TRUE)`篇，书评总字数为`r format(sum(commdf2$nchar, na.rm = TRUE), big.mark = ",")`，平均每篇书评`r round(sum(commdf2$nchar, na.rm = TRUE)/nrow(commdf2), 0)`字，书评字数中位数为`r median(commdf2$nchar, na.rm = TRUE)`。其他年度如图\@ref(fig:pic01)所示。
 
-```{r pic01, fig.showtext = TRUE, fig.cap='各年度书评数和书评字数', out.width='90%', fig.width=9, fig.heigth=3, fig.align='center', echo=FALSE, message=FALSE}
+```{r pic01, fig.showtext = TRUE, fig.cap='各年度书评数和书评字数', out.width='90%', fig.width=16, fig.heigth=3, fig.align='center', echo=FALSE, message=FALSE}
 par(mar = c(4,4,1,1), mfrow = c(1,2))
 barplot(table(substr(commdf1$time,1,4)), ylab="书评数")
 barplot(sapply(split(commdf1$nchar, f = substr(commdf1$time,1,4)), sum, na.rm = TRUE), ylab="书评字数")
 ```
 
+在本年度内，曾经存在于“响马读书”微信群的群友一共有`r length(unique(userdf_v1$openid[userdf_v1$verify == 1]))`人，其中本年度新增的群友有`r length(unique(userdf_new$openid))`人，这些新增群友中，年末还留存在群里的有`r length(unique(userdf_newsur$openid))`人，留存率为`r round(length(unique(userdf_newsur$openid))/length(unique(userdf_new$openid))*100,2)`\%。在本年度的全部`r length(unique(userdf_v1$openid[userdf_v1$verify == 1]))`位群友中，活跃群友（至少提交过一次书评的）数为`r length(unique(commdf2$openid))`人，活跃比例为`r round(length(unique(commdf2$openid))/length(unique(userdf_v1$openid[userdf_v1$verify == 1]))*100,2)`\%。每位活跃群友在本年度平均读书量为`r round(nrow(commdf2)/length(unique(commdf2$openid)),2)`本。其他年度如图\@ref(fig:pic02)所示。
+
+```{r pic02, fig.showtext = TRUE, fig.cap='各年度活跃群友数和平均阅读量', out.width='90%', fig.width=16, fig.heigth=3, fig.align='center', echo=FALSE, message=FALSE}
+par(mar = c(4,4,1,1), mfrow = c(1,2))
+barplot(sapply(split(commdf1$openid, f = substr(commdf1$time,1,4)), FUN = function(X) length(unique(X))), ylab="活跃群友数")
+barplot(sapply(split(commdf1$openid, f = substr(commdf1$time,1,4)), length) / sapply(split(commdf1$openid, f = substr(commdf1$time,1,4)), FUN = function(X) length(unique(X))), ylab="活跃群友平均阅读量")
+```
+
+# 书籍分析 {#chap2}
+
+截至目前，“响马读书群”所有群友阅读的书籍一共有`r length(unique(commdf1$doubanid))`本，本年度阅读的书籍有`r length(unique(commdf2$doubanid))`本。
+
+## 书籍热度
+
+本年度热度最高的三本书是`r paste0("《", hotdf2$doubantitle[1:3], "》", collapse = "
+")`，被阅读次数分别为`r paste0(hotdf2$count[1:3], collapse = "、")`次。热度排名前10的书籍如表\@ref(tab:tbl01)所示。
+
+```{r tbl01, echo=FALSE, message=FALSE,results='asis'}
+hotout1 <- hotdf2[1:10, ]
+hotout1 <- arrange(merge(hotout1, select(hotdf1, doubanid, c1 = count), all.x = TRUE), desc(count))
+hotout1$doubanid <- NULL
+names(hotout1) <- c("书名", "作者", "本年度阅读次数", "累计阅读次数")
+knitr::kable(hotout1, caption="年度排名前十的书籍")
+```
+
+其中“本年度阅读次数”是指本年度群友提交的书评中包含该书籍的次数，如果是同一本书的不同版本，会合并成一本。“累计阅读次数”是指截至目前该书籍被阅读并提交书评的次数。
+
+## 作者热度
+
+在本年度的`r length(unique(commdf2$doubanid))`本书籍中，一共包含了`r length(unique(commdf2$author))`位作者，他们的热度排名如表\@ref(tab:tbl02)所示。
+
+```{r tbl02, echo=FALSE, message=FALSE,results='asis'}
+autout1 <- autdf2[1:10, ]
+autout1 <- arrange(merge(autout1, select(autdf1, author, c1 = count), all.x = TRUE), desc(count))
+names(autout1) <- c("作者", "本年度阅读次数", "累计阅读次数")
+knitr::kable(autout1, caption="年度排名前十的作者")
+```
+
+其中“本年度阅读次数”是指本年度该作者的作品被阅读并评论的次数。“累计阅读次数”是指截至目前该作者的作品被阅读并评论的次数。
+
+
+# 读者分析 {#chap3}
+
+此处的读者指的是“响马读书群”提交过书评的活跃群友，每个月读者人数的变化如图\@ref(fig:pic03)所示。
+
+```{r pic03, fig.showtext = TRUE, fig.cap='月度读者数', out.width='70%', fig.width=12, fig.heigth=3, fig.align='center', echo=FALSE, message=FALSE}
+par(mar = c(4,4,1,1))
+barplot(sapply(split(commdf2$openid, f = substr(commdf2$time,1,7)), FUN = function(X) length(unique(X))), ylab = "读者人数")
+```
+
+## 阅读量均匀程度
+
+每位读者的阅读量不同，有的群友读的书非常多，有的群友每个月刚好完成任务，这就造成了阅读量的不均匀。我们使用洛伦兹曲线来衡量，横轴表示按照阅读量排序后，累积的读者数目的百分比，纵轴表示相对应的阅读书籍数的累积百分比。理想的情况下完全均匀，那么该曲线是一条45度的直线，实际情况中会弯曲，弯曲的程度越大，表示不均匀的程度越大。如图\@ref(fig:pic04)所示。
+
+```{r pic04, fig.showtext = TRUE, fig.cap='月度读者数', out.width='70%', fig.width=6, fig.heigth=6, fig.align='center', echo=FALSE, message=FALSE}
+par(mar = c(4,4,1,1))
+plot(cum~num, data = rderdf1, type = "l", xlab = "读者", ylab = "读书量", col = "red", lty = 2)
+points(cum~num, data = rderdf2, type = "l", col = "black", lwd = 2)
+legend(0, 1, c("本年度", "累积"), xjust = 0, col = c("black", "red"), lty = c(1, 2), lwd = c(2, 1))
+```
+
+## 生存分析
 

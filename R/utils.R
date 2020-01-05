@@ -80,4 +80,23 @@
 	return(paste0(OUT$tag, collapse = " "))
 }
 
+.verifyUsers <- function(userdf, starttime = "2015-01-01 00:00:00", endtime = "2076-01-01 00:00:00", startvar = "jointime", endvar = "leavetime") {
+	ut1 <- strptime(userdf[[startvar]], format = "%Y-%m-%d %H:%M:%S")
+	ut2 <- strptime(userdf[[endvar]], format = "%Y-%m-%d %H:%M:%S")
+	ut2[is.na(ut2)] <- strptime("2075-01-01 00:00:00", format = "%Y-%m-%d %H:%M:%S")
+	if (inherits(starttime, "POSIXlt")) {
+		vt1 <- starttime
+	} else {
+		vt1 <- strptime(starttime, format = "%Y-%m-%d %H:%M:%S")
+	}
+	if (inherits(endtime, "POSIXlt")) {
+		vt2 <- endtime
+	} else {
+		vt2 <- strptime(endtime, format = "%Y-%m-%d %H:%M:%S")
+	}
+	OUT <- userdf
+	OUT$verify <- 1
+	OUT$verify[vt1 > ut2 | vt2 < ut1] <- 0
+	return(OUT)
+}
 
