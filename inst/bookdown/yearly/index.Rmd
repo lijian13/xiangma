@@ -33,6 +33,7 @@ options(
 thisyear <- "YEAR"
 library(xiangma)
 library(showtext)
+library(survival)
 CONN <- .createConn()
 commdf0 <- dbGetQuery(CONN, "SELECT openid, msgid, doubanid, time, CHARACTER_LENGTH(trim(content))as nchar, include from comment_log")
 userdf0 <- dbGetQuery(CONN, "SELECT * from member_log")
@@ -41,6 +42,7 @@ dbDisconnect(CONN)
 Encoding(bookdf0$doubantitle) <- "UTF-8"
 Encoding(bookdf0$author) <- "UTF-8"
 Encoding(userdf0$publicname) <- "UTF-8"
+bookdf0$author <- .cleanAuthors(bookdf0$author)
 commdf1 <- commdf0[commdf0$include %in% 1 & substr(commdf0$time,1,4) <= thisyear, ]
 commdf2 <- commdf1[substr(commdf1$time,1,4)==thisyear, ]
 year.start <- strptime(paste0(thisyear, "-01-01 00:00:00"), format = "%Y-%m-%d %H:%M:%S")
@@ -68,6 +70,13 @@ rderdf1$cum <- cumsum(rderdf1$count)/ sum(rderdf1$count)
 rderdf2 <- arrange(summarise(group_by(commdf2, openid), count = length(doubanid)), count)
 rderdf2$num <- (1:nrow(rderdf2))/ nrow(rderdf2)
 rderdf2$cum <- cumsum(rderdf2$count)/ sum(rderdf2$count)
+
+survdf1 <- userdf0
+survdf1$leavetime[is.na(survdf1$leavetime)] <- as.character(year.end)
+survdf1 <- survdf1[survdf1$jointime < paste0(as.numeric(thisyear) + 1, "-01-01 00:00:00"), ]
+survdf1$days <- as.numeric(difftime(strptime(survdf1$leavetime, format = "%Y-%m-%d %H:%M:%S"), strptime(survdf1$jointime, format = "%Y-%m-%d %H:%M:%S"), unit = "days"))
+survdf2 <- summarise(group_by(survdf1, openid), days = sum(days), leavetime = max(leavetime))
+
 ```
 
 
@@ -97,8 +106,7 @@ barplot(sapply(split(commdf1$openid, f = substr(commdf1$time,1,4)), length) / sa
 
 ## 书籍热度
 
-本年度热度最高的三本书是`r paste0("《", hotdf2$doubantitle[1:3], "》", collapse = "
-")`，被阅读次数分别为`r paste0(hotdf2$count[1:3], collapse = "、")`次。热度排名前10的书籍如表\@ref(tab:tbl01)所示。
+本年度热度排名前10的书籍如表\@ref(tab:tbl01)所示。其中“本年度阅读次数”是指本年度群友提交的书评中包含该书籍的次数，如果是同一本书的不同版本，会合并成一本。“累计阅读次数”是指截至目前该书籍被阅读并提交书评的次数。
 
 ```{r tbl01, echo=FALSE, message=FALSE,results='asis'}
 hotout1 <- hotdf2[1:10, ]
@@ -108,7 +116,6 @@ names(hotout1) <- c("书名", "作者", "本年度阅读次数", "累计阅读�
 knitr::kable(hotout1, caption="年度排名前十的书籍")
 ```
 
-其中“本年度阅读次数”是指本年度群友提交的书评中包含该书籍的次数，如果是同一本书的不同版本，会合并成一本。“累计阅读次数”是指截至目前该书籍被阅读并提交书评的次数。
 
 ## 作者热度
 
@@ -126,18 +133,16 @@ knitr::kable(autout1, caption="年度排名前十的作者")
 
 # 读者分析 {#chap3}
 
-此处的读者指的是“响马读书群”提交过书评的活跃群友，每个月读者人数的变化如图\@ref(fig:pic03)所示。
+此处的读者指的是“响马读书群”提交过书评的活跃群友，本年度平均每月的读着数为`r round(mean(sapply(split(commdf2$openid, f = substr(commdf2$time,1,7)), FUN = function(X) length(unique(X)))), 1)`。
 
-```{r pic03, fig.showtext = TRUE, fig.cap='月度读者数', out.width='70%', fig.width=12, fig.heigth=3, fig.align='center', echo=FALSE, message=FALSE}
-par(mar = c(4,4,1,1))
-barplot(sapply(split(commdf2$openid, f = substr(commdf2$time,1,7)), FUN = function(X) length(unique(X))), ylab = "读者人数")
-```
 
 ## 阅读量均匀程度
 
-每位读者的阅读量不同，有的群友读的书非常多，有的群友每个月刚好完成任务，这就造成了阅读量的不均匀。我们使用洛伦兹曲线来衡量，横轴表示按照阅读量排序后，累积的读者数目的百分比，纵轴表示相对应的阅读书籍数的累积百分比。理想的情况下完全均匀，那么该曲线是一条45度的直线，实际情况中会弯曲，弯曲的程度越大，表示不均匀的程度越大。如图\@ref(fig:pic04)所示。
+每位读者的阅读量不同，有的群友读的书非常多，有的群友每个月刚好完成任务，这就造成了阅读量的不均匀。我们使用洛伦兹曲线来衡量这种不均匀的程度，横轴表示按照阅读量排序后，累积的读者数目的百分比，纵轴表示相对应的阅读书籍数的累积百分比。
 
-```{r pic04, fig.showtext = TRUE, fig.cap='月度读者数', out.width='70%', fig.width=6, fig.heigth=6, fig.align='center', echo=FALSE, message=FALSE}
+理想的情况下如果完全均匀，那么该曲线是一条45度的直线，实际情况中会弯曲，弯曲的程度越大，表示不均匀的程度越大。如图\@ref(fig:pic04)所示。
+
+```{r pic04, fig.showtext = TRUE, fig.cap='月度读者数', out.width='60%', fig.width=6, fig.heigth=8, fig.align='center', echo=FALSE, message=FALSE}
 par(mar = c(4,4,1,1))
 plot(cum~num, data = rderdf1, type = "l", xlab = "读者", ylab = "读书量", col = "red", lty = 2)
 points(cum~num, data = rderdf2, type = "l", col = "black", lwd = 2)
@@ -145,4 +150,27 @@ legend(0, 1, c("本年度", "累积"), xjust = 0, col = c("black", "red"), lty =
 ```
 
 ## 生存分析
+
+根据“响马读书”群的群规，每位群友如果因为未提交书评被清退后，隔一个月后可以再次申请入群，我们把单次入群到退出的过程记为一个生命周期，统计单次入群生存天数可得，均值为`r  round(mean(survdf1$days), 1)`天，中位数为`r  round(median(survdf1$days), 1)`天。对于多次入群的群友，我们也可以统计其累计生存时间，均值为`r  round(mean(survdf2$days), 1)`天，中位数为`r  round(median(survdf2$days), 1)`天。生存天数的分布如图\@ref(fig:pic05)所示。
+
+```{r pic05, fig.showtext = TRUE, fig.cap='生存天数分布图', out.width='90%', fig.width=10, fig.heigth=6, fig.align='center', echo=FALSE, message=FALSE}
+par(mar = c(4,4,1,1), mfrow = c(1,2))
+hist(survdf1$days, breaks = 50, xlab = "单次入群生存天数", main = "")
+hist(survdf2$days, breaks = 50, xlab = "累计生存天数", main = "")
+```
+
+基于生存数据拟合生存模型，并画出生存曲线，如图\@ref(fig:pic06)所示。
+
+```{r pic06, fig.showtext = TRUE, fig.cap='生存曲线图', out.width='90%', fig.width=10, fig.heigth=6, fig.align='center', echo=FALSE, message=FALSE}
+survdf1$status <- 2
+survdf1$status[survdf1$leavetime == as.character(year.end)] <- 1
+survdf2$status <- 2
+survdf2$status[survdf2$leavetime == as.character(year.end)] <- 1
+s1 <- survfit(Surv(days, status) ~ 1, data = survdf1) 
+s2 <- survfit(Surv(days, status) ~ 1, data = survdf2) 
+par(mar = c(4,4,4,1), mfrow = c(1,2))
+plot(s1, xlab = "Survival Time (days)", main = "单次入群生存曲线") 
+plot(s1, xlab = "Survival Time (days)", main = "累计生存曲线")
+```
+
 

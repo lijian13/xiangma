@@ -100,3 +100,15 @@
 	return(OUT)
 }
 
+.cleanAuthors <- function(autv) {
+	OUT <- sapply(strsplit(autv, split = ","), "[", 1)
+	OUT <- gsub("\\[.*?\\]", "", OUT)
+	OUT <- gsub("\uFF08.*?\uFF09", "", OUT)
+	OUT <- gsub("\uFF3B.*?\uFF3D", "", OUT)
+	OUT <- gsub("\\(.*?\\)", "", OUT)
+	OUT <- gsub("\u3014.*?\u3015", "", OUT)
+	OUT <- gsub("\u3010.*?\u3011", "", OUT)
+	OUT <- gsub("\\s+", "", OUT)
+	OUT[is.na(OUT)] <- ""
+	return(OUT)
+}

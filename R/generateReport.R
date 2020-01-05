@@ -23,7 +23,7 @@ generateReport <- function(reportdate = substr(Sys.time(), 1, 11), reporttype = 
 				render_book("index.Rmd", "bookdown::pdf_book")
 				outfile <- file.path(tmpdir, reporttype, "_book", paste0("xiangma_", substr(reportdate, 1, 4), ".pdf"))
 				if (file.exists(outfile)) {
-					file.copy(from = outfile, to = old.wd)
+					file.copy(from = outfile, to = old.wd, overwrite = TRUE)
 				}
 			}, error = function(e) {
 				returnstr <- gettext(e)
