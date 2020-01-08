@@ -21,7 +21,7 @@ searchDoubanList <- function(q) {
 
 
 searchDoubanBook <- function(id, detail = FALSE) {
-	
+	require(rvest)
 	html0 <- read_html(paste0("https://book.douban.com/subject/", id))
 	node1 <- html_nodes(html0, xpath = "//div[@id='wrapper']/h1")
 	s1 <- strstrip(html_text(node1))
