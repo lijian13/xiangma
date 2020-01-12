@@ -38,11 +38,17 @@ CONN <- .createConn()
 commdf0 <- dbGetQuery(CONN, "SELECT openid, msgid, doubanid, time, CHARACTER_LENGTH(trim(content))as nchar, include from comment_log")
 userdf0 <- dbGetQuery(CONN, "SELECT * from member_log")
 bookdf0 <- dbGetQuery(CONN, "SELECT id as doubanid, title as doubantitle, author from douban_list")
+followdf0 <- dbGetQuery(CONN, paste0("SELECT * from followers where openid in (", paste0(paste0("'", userdf0$openid, "'"), collapse=","), ")"))
 dbDisconnect(CONN)
 Encoding(bookdf0$doubantitle) <- "UTF-8"
 Encoding(bookdf0$author) <- "UTF-8"
 Encoding(userdf0$publicname) <- "UTF-8"
+Encoding(followdf0$nickname) <- "UTF-8"
+Encoding(followdf0$city) <- "UTF-8"
 bookdf0$author <- .cleanAuthors(bookdf0$author)
+userdf0 <- merge(userdf0, followdf0[, c("openid", "sex")], all.x = TRUE)
+commdf0 <- merge(commdf0, followdf0[, c("openid", "sex")], all.x = TRUE)
+
 commdf1 <- commdf0[commdf0$include %in% 1 & substr(commdf0$time,1,4) <= thisyear, ]
 commdf2 <- commdf1[substr(commdf1$time,1,4)==thisyear, ]
 year.start <- strptime(paste0(thisyear, "-01-01 00:00:00"), format = "%Y-%m-%d %H:%M:%S")
@@ -75,7 +81,7 @@ survdf1 <- userdf0
 survdf1$leavetime[is.na(survdf1$leavetime)] <- as.character(year.end)
 survdf1 <- survdf1[survdf1$jointime < paste0(as.numeric(thisyear) + 1, "-01-01 00:00:00"), ]
 survdf1$days <- as.numeric(difftime(strptime(survdf1$leavetime, format = "%Y-%m-%d %H:%M:%S"), strptime(survdf1$jointime, format = "%Y-%m-%d %H:%M:%S"), unit = "days"))
-survdf2 <- summarise(group_by(survdf1, openid), days = sum(days), leavetime = max(leavetime))
+survdf2 <- summarise(group_by(survdf1, openid), days = sum(days), sex = max(sex), leavetime = max(leavetime))
 
 ```
 
