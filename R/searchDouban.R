@@ -1,6 +1,7 @@
 
 
 searchDoubanList <- function(q) {
+	require(rvest)
 	q <- gsub("\\s+", "+", strstrip(q))
 	html0 <- read_html(paste0("https://www.douban.com/search?q=", q))
 	node1 <- html_nodes(html0, xpath = "//div[@class='result-list'][1]/div[@class='result']/div[@class='content']/div[@class='title']/h3")
