@@ -8,6 +8,7 @@ bibliography:
 - packages.bib
 description: 
 documentclass: ctexbook
+always_allow_html: true
 geometry:
 - b5paper
 - tmargin=2.5cm
@@ -34,6 +35,7 @@ thisyear <- "YEAR"
 library(xiangma)
 library(showtext)
 library(survival)
+library(kableExtra)
 CONN <- .createConn()
 commdf0 <- dbGetQuery(CONN, "SELECT openid, msgid, doubanid, time, CHARACTER_LENGTH(trim(content))as nchar, include from comment_log")
 userdf0 <- dbGetQuery(CONN, "SELECT * from member_log")
@@ -119,7 +121,8 @@ hotout1 <- hotdf2[1:10, ]
 hotout1 <- arrange(merge(hotout1, select(hotdf1, doubanid, c1 = count), all.x = TRUE), desc(count))
 hotout1$doubanid <- NULL
 names(hotout1) <- c("书名", "作者", "本年度阅读次数", "累计阅读次数")
-knitr::kable(hotout1, caption="年度排名前十的书籍")
+knitr::kable(hotout1, caption="年度排名前十的书籍") %>% 
+		kable_styling(latex_options = "hold_position", font_size = 7)
 ```
 
 
@@ -131,7 +134,8 @@ knitr::kable(hotout1, caption="年度排名前十的书籍")
 autout1 <- autdf2[1:10, ]
 autout1 <- arrange(merge(autout1, select(autdf1, author, c1 = count), all.x = TRUE), desc(count))
 names(autout1) <- c("作者", "本年度阅读次数", "累计阅读次数")
-knitr::kable(autout1, caption="年度排名前十的作者")
+knitr::kable(autout1, caption="年度排名前十的作者") %>% 
+		kable_styling(latex_options = "hold_position", font_size = 7)
 ```
 
 其中“本年度阅读次数”是指本年度该作者的作品被阅读并评论的次数。“累计阅读次数”是指截至目前该作者的作品被阅读并评论的次数。

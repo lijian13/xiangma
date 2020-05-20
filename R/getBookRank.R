@@ -36,21 +36,17 @@ getBookRank <- function(month = NULL, n = 20, picfile = NULL) {
 				Encoding(bookdf1$title) <- "UTF-8"
 				bookdf2 <- dbGetQuery(CONN, strsql2)
 				Encoding(bookdf2$title) <- "UTF-8"
-				booklistdf <- dbGetQuery(CONN, "select distinct id, author from douban_list")
+				booklistdf <- dbGetQuery(CONN, "select distinct id, author, title as title1 from douban_list")
 				Encoding(booklistdf$author) <- "UTF-8"
+				Encoding(booklistdf$title1) <- "UTF-8"
 				
-				bookdf <- merge(bookdf1, bookdf2[, c("id", "num1")], all.x = TRUE)
+				bookdf <- merge(bookdf1, bookdf2[, c("id", "title", "num1")], all.x = TRUE)
 				bookdf$num1[is.na(bookdf$num1)] <- 0
 				bookdf <- merge(bookdf, booklistdf, all.x = TRUE)
+				bookdf$title <- bookdf$title1
+				bookdf$title1 <- NULL
 				bookdf <- bookdf[order(bookdf$num, bookdf$num1, -bookdf$age, decreasing = TRUE), ]
-				bookdf$author <- sapply(strsplit(bookdf$author, split = ","), "[", 1)
-				bookdf$author <- gsub("\\[.*?\\]", "", bookdf$author)
-				bookdf$author <- gsub("\uFF08.*?\uFF09", "", bookdf$author)
-				bookdf$author <- gsub("\uFF3B.*?\uFF3D", "", bookdf$author)
-				bookdf$author <- gsub("\\(.*?\\)", "", bookdf$author)
-				bookdf$author <- gsub("\u3014.*?\u3015", "", bookdf$author)
-				bookdf$author <- gsub("\u3010.*?\u3011", "", bookdf$author)
-				bookdf$author <- gsub("\\s+", "", bookdf$author)
+				bookdf$author <- .cleanAuthors(bookdf$author)
 				
 				OUTDF <- bookdf[1:min(n, nrow(bookdf)), ]
 				rownames(OUTDF) <- NULL
