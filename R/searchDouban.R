@@ -1,6 +1,25 @@
 
-
 searchDoubanList <- function(q) {
+	require(rvest)
+	q <- gsub("\\s+", "+", strstrip(q))
+	html0 <- read_html(paste0("https://www.douban.com/search?cat=1001&q=", q))
+	node1 <- html_nodes(html0, xpath = "//div[@class='result-list'][1]/div[@class='result']/div[@class='content']/div[@class='title']/h3")
+	s1 <- strstrip(html_text(node1))
+	node2 <- html_nodes(html0, xpath = "//div[@class='result-list'][1]/div[@class='result']/div[@class='content']/div[@class='title']/div/span[@class='subject-cast']")
+	s2 <- strstrip(html_text(node2))
+	node3 <- html_nodes(html0, xpath = "//div[@class='result-list'][1]/div[@class='result']/div[@class='content']/p")
+	s3 <- strstrip(html_text(node3))
+	node4 <- html_nodes(html0, xpath = "//div[@class='result-list'][1]/div[@class='result']/div[@class='content']/div[@class='title']/h3/a")
+	s4 <- strstrip(gsub(",\\s+qcat:.*$", "", gsub("^.*sid:", "", html_attr(node4, "onclick"))))
+	n0 <- min(length(s1), length(s2), length(s3), length(s4))
+	OUT <- data.frame(q = q, id = s4[1:n0], title = s1[1:n0], author = s2[1:n0], desc = s3[1:n0], stringsAsFactors = FALSE)
+	OUT$title <- gsub("\u00A0", "", OUT$title)
+	return(OUT)
+}
+
+
+# douban homepage search
+searchDoubanList_old <- function(q) {
 	require(rvest)
 	q <- gsub("\\s+", "+", strstrip(q))
 	html0 <- read_html(paste0("https://www.douban.com/search?q=", q))
