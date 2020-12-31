@@ -17,13 +17,7 @@ analyzeAnual <- function(nm, year = substr(Sys.time(), 1, 4), picfile = NULL) {
 				Encoding(userdf$publicname) <- "UTF-8"
 				userdf$leavetime[is.na(userdf$leavetime)] <- format(Sys.time(), format = "")
 				commentdf$no <- strpad(1:nrow(commentdf), 3, pad = "0")
-				commentdf$author <- sapply(strsplit(commentdf$author, split = ","), "[", 1)
-				commentdf$author <- gsub("\\[.*\\]", "", commentdf$author)
-				commentdf$author <- gsub("\uFF08.*\uFF09", "", commentdf$author)
-				commentdf$author <- gsub("\\(.*\\)", "", commentdf$author)
-				commentdf$author <- gsub("\u3014.*\u3015", "", commentdf$author)
-				commentdf$author <- gsub("\u3010.*\u3011", "", commentdf$author)
-				commentdf$author <- gsub("\\s+", "", commentdf$author)
+				commentdf$author <- .cleanAuthors(commentdf$author)
 				commentdf <- do.call("rbind", lapply(split(commentdf, f = commentdf$doubanid), FUN = function(X) X[1, ]))
 				
 				out.n <- nrow(commentdf)
